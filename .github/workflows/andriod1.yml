@@ -1,33 +1,41 @@
 name: Build APK
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ master ]        # 仅 master 更新时触发
-  workflow_dispatch:            # 允许手动触发
+    branches: [ master ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source (含子模块)
+      # ① 拉代码（含子模块）
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          fetch-depth: 0
 
+      # ② 赋可执行权限（必须在同一个 job、同一个工作目录）
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # ③ 安装 JDK
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      - name: Make gradlew executable
-        run: chmod +x gradlew
+      # （可选）列一下文件，确认 gradlew 已可执行
+      - name: Debug - list files
+        run: ls -l gradlew
 
+      # ④ 编译 APK
       - name: Build release APK
         run: ./gradlew :app_main:assembleRelease
 
+      # ⑤ 上传产物
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
